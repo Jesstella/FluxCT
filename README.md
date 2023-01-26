@@ -15,3 +15,5 @@ Outputs:
 <li> A .png file for the plot produced by FluxCT. </li>
 <li> A .csv file containing the output data from FluxCT. </li> 
 </ul>
+
+Any problems, concerns or suggestions should be sent to: jessica.s.stasik@vanderbilt.edu for the most timely review and reply. 
