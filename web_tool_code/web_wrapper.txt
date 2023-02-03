@@ -1,0 +1,55 @@
+# Web Wrapper #
+
+from flask import Flask, request
+from processing import do_calculation
+
+app = Flask(__name__)
+app.config["DEBUG"] = True
+
+@app.route('/', methods=["GET", "POST"])
+def adder_page():
+    errors = ""
+    if request.method == "POST":
+        kic = None
+        try:
+            kic = request.form["kic"]
+        except:
+            errors += "<p>{!r} is not a number.</p>\n".format(request.form["kic"])
+        if kic is not None:
+            r, r2, r3, r4, r5, r6, r7 = do_calculation(kic)
+            return '''
+                <html>
+                    <body>
+                        <p>The RUWE value(s) are:</p>
+                        <p>{r}</p>
+                        <p>The Gaia magnitude of the primary star is:</p>
+                        <p>{r2}</p>
+                        <p>The Gaia magnitude(s) of companion star(s) is:</p>
+                        <p>{r3}</p>
+                        <p>Magnitude difference(s):</p>
+                        <p>{r4}</p>
+                        <p>Flux ratio(s):</p>
+                        <p>{r5}</p>
+                        <p>Percentage of Flux Contamination(s):</p>
+                        <p>{r6}</p>
+                        <p>Total Flux Contamination: (%)</p>
+                        <p>{r7}</p>
+                        <img src="/static/plot2.jpg" alt="User Image">
+                        <p><a href="/">Click here to try a different star!</a>
+                    </body>
+                </html>
+            '''.format(r=r, r2=r2, r3=r3, r4=r4, r5=r5, r6=r6, r7=r7)
+
+    return '''
+        <html>
+            <body>
+                {errors}
+                <p>Enter either a KIC or TIC ID in the format KIC XXXXXX or TIC XXXXXX:</p>
+                <form method="post" action=".">
+                    <p><input name="kic" /></p>
+                    <p><input type="submit" value="Is it a Binary Though?" /></p>
+                </form>
+            </body>
+        </html>
+    '''.format(errors=errors)
+
