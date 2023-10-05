@@ -20,4 +20,6 @@ Any problems, concerns or suggestions should be sent to: jessica.s.stasik@vander
 
 Update: 
 >1. TESS datasets are enormously big, around 60MB (Way larger than 1~2 Mb, the size of Kepler dataset)
->2. 
+>2. Does MastDownload dir data need to be clean?
+>3. kic_fits.fits dataset is removed after plot and r1~r7 is calculated/generated.
+>4. plot2.jpg is removed after reading it from memory
