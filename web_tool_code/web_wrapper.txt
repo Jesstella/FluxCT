@@ -1,6 +1,7 @@
-# Web Wrapper #
-
-from flask import Flask, request
+import os
+import time
+from flask import Flask, request, send_file
+from io import BytesIO
 from processing import do_calculation
 
 app = Flask(__name__)
@@ -17,9 +18,10 @@ def adder_page():
             errors += "<p>{!r} is not a number.</p>\n".format(request.form["kic"])
         if kic is not None:
             r, r2, r3, r4, r5, r6, r7 = do_calculation(kic)
-            return '''
+            response_html = '''
                 <html>
                     <body>
+                        <p> Testing Case ( Delete Later )
                         <p>The RUWE value(s) are:</p>
                         <p>{r}</p>
                         <p>The Gaia magnitude of the primary star is:</p>
@@ -34,11 +36,12 @@ def adder_page():
                         <p>{r6}</p>
                         <p>Total Flux Contamination: (%)</p>
                         <p>{r7}</p>
-                        <img src="/static/plot2.jpg" alt="User Image">
+                        <img src="/get_image" alt="User Image">
                         <p><a href="/">Click here to try a different star!</a>
                     </body>
                 </html>
             '''.format(r=r, r2=r2, r3=r3, r4=r4, r5=r5, r6=r6, r7=r7)
+            return response_html
 
     return '''
         <html>
@@ -53,3 +56,9 @@ def adder_page():
         </html>
     '''.format(errors=errors)
 
+@app.route('/get_image')
+def get_image():
+    with open('plot2.jpg', 'rb') as img:
+        img_cache = img.read()
+    os.remove('plot2.jpg')
+    return send_file(BytesIO(img_cache), mimetype='image/jpg', as_attachment=True, attachment_filename='plot2.jpg', cache_timeout=0)
