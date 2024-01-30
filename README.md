@@ -1,4 +1,4 @@
-# FluxCT
+# FluxCT V2.0
 
 Welcome to the batch code for the FluxCT webtool. The following downloadable script allows the user to download the script for to batch run Kepler ID data. 
 
@@ -16,7 +16,7 @@ Outputs:
 <li> A .csv file containing the output data from FluxCT. </li> 
 </ul>
 
-Any problems, concerns or suggestions should be sent to: jessica.s.stasik@vanderbilt.edu for the most timely review and reply. 
+Any problems, concerns or suggestions should be sent to: Zilin.Dong@vanderbilt.edu and jessica.s.stasik@vanderbilt.edu for the most timely review and reply. 
 
 Update: 
 >1. TESS datasets are enormously big, around 60MB (Way larger than 1~2 Mb, the size of Kepler dataset)
