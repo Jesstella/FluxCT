@@ -23,6 +23,6 @@ Update:
 Kepler and TESS target pixel files due to secondary visual sources. FluxCT V2.0 focuses on enhancing
 functionality, user experience, and data processing capabilities. We resolved existing issues in using
 target pixel files from TESS, allowing the user to search any point object observed by TESS and acquire
-parameters for the star and any possible contaminating visual pairs. Issues relating to the running8
+parameters for the star and any possible contaminating visual pairs. Issues relating to the running
 of the web tool have been resolved, and a batch code for TESS is now available on the companion
 GitHUb.   
