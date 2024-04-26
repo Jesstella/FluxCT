@@ -4,7 +4,7 @@ Welcome to the batch code for the FluxCT webtool. The following downloadable scr
 
 Inputs: 
 <ul>
-<li> A .csv file of KIC IDs, using a comma as the separator, with the title 'id' in the column. </li>
+<li> A .csv file of KIC/TIC IDs, using a comma as the separator, with the title 'id' in the column. </li>
 <li> A directory path for where the script and id file will be kept. </li>
 <li> A directory path for the fits files, plots, and final data file to be sent. </li>
 </ul>
