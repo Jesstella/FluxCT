@@ -1,13 +1,13 @@
 '''
-This script allows the user to create the data products and plots from FluxCT for multiple targets without using the webtool. 
+This script allows the user to create the data products and plots from FluxCT V2.0 for multiple targets without using the webtool. 
 
 INPUTS: 
  --> The user will need to specify the directory path for code and plots. 
- --> An input table of either KIC IDs with the format 'id' as the column name and comma separators. 
+ --> An input table of either KIC or TIC IDs with the format 'id' as the column name and comma separators. 
 
 OUTPUTS: 
  --> Downloaded fits file for the star from lightkurve to the plots directory. 
- --> Downloaded plot created by FluxCT to the plots directory. 
+ --> Downloaded plot created by FluxCT V2.0 to the plots directory. 
  --> Downloaded FluxCT data products to a .csv file.
 '''
 
@@ -148,7 +148,7 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 # Paths and files 
-code_file_path = './' # USER INPUT - Code directory 
+code_file_path = './batch_code/' # USER INPUT - Code directory 
 plot_path = './plots/' # USER INPUT - Plot directory 
 
 
@@ -190,7 +190,7 @@ for inputs in identifiers:
     numberID = inputs[4:] # Getting the number ID
     print(f'\n********** {inputs[:3]} ' + str(numberID) + ' – Star Number ' + str(a) + ' **********') 
    
-    # Removing Used FITS file for TIC. Necessary for each iteration. 
+    # Removing Used FITS file for TIC. Necessary for each iteration to save space. 
     if os.path.exists(tasoc2_directory):
         # Remove the TASOC2 directory and all its contents
         for item in os.listdir(tasoc2_directory):
@@ -256,7 +256,7 @@ for inputs in identifiers:
                 
                 sr = lightkurve.search_tesscut(coord, sector=sector)
                 tpf = sr.download(cutout_size=tpf0.shape)
-                print(tpf.pipeline_mask)
+                print(tpf.pipeline_mask) # Comment out this Line to deactive PipelineMask printing 
                 tpf_one = tpf[0]
                 tpf_one.to_fits(star_type + str(numberID) + '_fits.fits',overwrite=True)
                 ap = tpf0.pipeline_mask
@@ -404,7 +404,7 @@ for inputs in identifiers:
                 plot_flux_order.append(flux[index]) 
 
         # Saving final data lists for the output file
-        star_list.append(numberID)
+        star_list.append(star_type+" "+numberID)
         ra_list.append(plot_ra_order) 
         dec_list.append(plot_dec_order) 
         gaia_source_list.append(plot_source_order) 
@@ -494,3 +494,13 @@ for inputs in identifiers:
             a = a + 1
             plt.close()
 
+# Timing code 
+t1 = time.time()
+total = t1 - t0
+print('The total time to create these plots is ' + str(total/60) + ' minutes.') 
+
+# Saving data file
+data = zip(star_list, ra_list, dec_list, gaia_source_list, g_mag_list, ruwe_list, flux_list) 
+header = ['star_id', 'ra', 'dec', 'gaia_source_list', 'g_mag_list', 'ruwe', 'flux']
+df = pd.DataFrame(data=data, columns=header) 
+df.to_csv(code_file_path + 'fluxct_data.csv', index=False) 
