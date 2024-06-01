@@ -28,7 +28,7 @@ def adder_page():
                         <p>{r2}</p>
                         <p>The Gaia magnitude(s) of companion star(s) is:</p>
                         <p>{r3}</p>
-                        <p>Magnitude difference(s): (A Magnitude Cut with magnitude difference larger or euqal to 5 is used) </p>
+                        <p>Magnitude difference(s): (A Magnitude Cut with magnitude difference larger or equal to 5 is used) </p>
                         <p>{r4}</p>
                         <p>Flux ratio(s):</p>
                         <p>{r5}</p>
@@ -47,7 +47,7 @@ def adder_page():
         <html>
             <body>
                 {errors}
-                <p>Enter either a KIC or TIC ID in the format KIC XXXXXX or TIC XXXXXX (Plot normally takes up to 2 minute to process):</p>
+                <p>Enter either a KIC or TIC ID in the format KIC XXXXXX or TIC XXXXXX (NB: some TESS targets may take up to 2 minutes to process):</p>
                 <form method="post" action=".">
                     <p><input name="kic" /></p>
                     <p><input type="submit" value="Is it a Binary Though?" /></p>
