@@ -1,1 +1,6 @@
 Documentation for Batch Code.
+
+The file Batch_fluxct_code_tess.py is used for plot generation. 
+The jupyter file demo.ipynb includes code for plot generation, Aperture Mask Size Calculation, and Amplitude Dilution distribution plot generation.
+
+Please change the code_file_path and plot_path before running the code. 
