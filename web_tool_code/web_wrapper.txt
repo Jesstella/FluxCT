@@ -28,7 +28,7 @@ def adder_page():
                         <p>{r2}</p>
                         <p>The Gaia magnitude(s) of companion star(s) is:</p>
                         <p>{r3}</p>
-                        <p>Magnitude difference(s): (A Magnitude Cut with magnitude difference larger or equal to 5 is used) </p>
+                        <p>Magnitude difference(s): (For TIC stars, A Magnitude Cut with magnitude difference larger or equal to 5 is used) </p>
                         <p>{r4}</p>
                         <p>Flux ratio(s):</p>
                         <p>{r5}</p>

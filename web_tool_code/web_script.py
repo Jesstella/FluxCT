@@ -34,6 +34,7 @@ def do_calculation(inputs):
     flux_list = []
     not_found = []
     mag_diff_list = []
+    MAG_CUT = 5
     a = 0
     star_type = ''
 
@@ -167,7 +168,7 @@ def do_calculation(inputs):
     print('\n********** TESS ' + str(numberID) + ' – Star Number ' + str(a) + ' **********')
 
     if inputs[:3] == 'KIC':
-        tpf = search_targetpixelfile(inputs, author='Kepler').download_all()
+        tpf = search_targetpixelfile(inputs, author='Kepler', limit=1).download_all()
         tpf_one = tpf[0]
         star_type = 'KIC'
         m2 = tpf_one.to_fits(star_type + str(numberID) + '_fits.fits', overwrite=True)
@@ -380,6 +381,11 @@ def do_calculation(inputs):
     primary_g_mag = g_mag_list[0][0]
     companion_mag_list = list(g_mag_list[0][1:])
 
+    mag_diff_list.append(0)
+
+
+
+
     try:
         for i in range(len(companion_mag_list)):
             mag_diff_list.append(np.abs(primary_g_mag - companion_mag_list[i]))
@@ -390,7 +396,8 @@ def do_calculation(inputs):
     primary_g_flux = flux_list[0]
     companion_flux_list = list(flux_list[1:])
     try:
-        flux_ratio_list = [(k / (primary_g_flux + k)) for k in companion_flux_list]
+        flux_ratio_list = [0] + [(k / (primary_g_flux + k)) for k in companion_flux_list]
+
         percentage_flux = [h*100 for h in flux_ratio_list]
     except:
         flux_ratio_list = []
@@ -425,20 +432,33 @@ def do_calculation(inputs):
 
         # Plotting Companion magnitudes
 
-        for i in range(len(phot)):
-            try:
-                # Applying magnitude cut-off remove difference >=5
-                if np.abs(plot_phot_order[i] - plot_phot_order[0] )<=5:
+        if star_type == 'KIC':
+            for i in range(len(phot)):
+                try:
+
 
                     plt.text(companions_to_plot[0][i], companions_to_plot[1][i], str(round(plot_phot_order[i], 3)), color='#dd1c77', fontsize=25)
                     plt.scatter(companions_to_plot[0][i], companions_to_plot[1][i], marker='*', s=2000, color='white', edgecolor='black')
-                else:
-                    del plot_phot_order[i]
-                    del companions_to_plot[0][i]
-                    del companions_to_plot[1][i]
 
-            except:
-                continue
+
+                except:
+                    continue
+        if star_type =="TIC":
+
+            for i in range(len(phot)):
+                try:
+                    # Applying magnitude cut-off remove difference >= MAG_CUT
+                    if np.abs(plot_phot_order[i] - plot_phot_order[0] )<=MAG_CUT:
+
+                        plt.text(companions_to_plot[0][i], companions_to_plot[1][i], str(round(plot_phot_order[i], 3)), color='#dd1c77', fontsize=25)
+                        plt.scatter(companions_to_plot[0][i], companions_to_plot[1][i], marker='*', s=2000, color='white', edgecolor='black')
+                    else:
+                        del plot_phot_order[i]
+                        del companions_to_plot[0][i]
+                        del companions_to_plot[1][i]
+
+                except:
+                    continue
 
         # Plotting target star
 

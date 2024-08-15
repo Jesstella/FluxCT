@@ -1,13 +1,13 @@
 '''
-This script allows the user to create the data products and plots from FluxCT V2.0 for multiple targets without using the webtool. 
+This script allows the user to create the data products and plots from FluxCT for multiple targets without using the webtool. 
 
 INPUTS: 
  --> The user will need to specify the directory path for code and plots. 
- --> An input table of either KIC or TIC IDs with the format 'id' as the column name and comma separators. 
+ --> An input table of either KIC IDs with the format 'id' as the column name and comma separators. 
 
 OUTPUTS: 
  --> Downloaded fits file for the star from lightkurve to the plots directory. 
- --> Downloaded plot created by FluxCT V2.0 to the plots directory. 
+ --> Downloaded plot created by FluxCT to the plots directory. 
  --> Downloaded FluxCT data products to a .csv file.
 '''
 
@@ -30,8 +30,7 @@ import os
 import glob
 import shutil
 from matplotlib import patches
-
-
+from astropy.table import QTable
 
 class MyTPF(object):
     """
@@ -148,9 +147,9 @@ else:
     ssl._create_default_https_context = _create_unverified_https_context
 
 # Paths and files 
-code_file_path = './batch_code/' # USER INPUT - Code directory 
+code_file_path = './' # USER INPUT - Code directory 
 plot_path = './plots/' # USER INPUT - Plot directory 
-
+final_file_path = './'
 
 download_tasoc="./cache"   # Downloading Path for FITS file from TASOC
 
@@ -158,6 +157,11 @@ download_tasoc="./cache"   # Downloading Path for FITS file from TASOC
 # Path to the TASOC directory
 tasoc2_directory = "./cache"
 
+
+# Settings for Magnitude Cut threshold:
+MAG_CUT = 5
+MAG_KEPLER = False # Set True if you want to also apply the magnitude cut to Kepler data
+MAG_TESS = True
 
 identifiers = pd.read_csv(code_file_path + 'test_star_list.csv') # USER INPUT - KIC ID list  
 identifiers = list(identifiers['id'])
@@ -171,6 +175,10 @@ dec_list = []
 g_mag_list = []
 ruwe_list = []
 flux_list = []
+amp_dil_l = []
+mag_diff_l = []
+comp_num_l = []
+total_amp_dil = []
 not_found = []
 
 # Starting time counter 
@@ -190,7 +198,7 @@ for inputs in identifiers:
     numberID = inputs[4:] # Getting the number ID
     print(f'\n********** {inputs[:3]} ' + str(numberID) + ' – Star Number ' + str(a) + ' **********') 
    
-    # Removing Used FITS file for TIC. Necessary for each iteration to save space. 
+    # Removing Used FITS file for TIC. Necessary for each iteration. 
     if os.path.exists(tasoc2_directory):
         # Remove the TASOC2 directory and all its contents
         for item in os.listdir(tasoc2_directory):
@@ -209,13 +217,12 @@ for inputs in identifiers:
     # Searching for tpf with lightkurve
 
     if inputs[:3] == 'KIC':
-        tpf = search_targetpixelfile(inputs, author='Kepler').download_all()
+        tpf = search_targetpixelfile(inputs, author='Kepler', limit=1).download_all()
+        print(tpf)
         tpf_one = tpf[0]
         star_type = 'KIC'
         m2 = tpf_one.to_fits(star_type + str(numberID) + '_fits.fits', overwrite=True)
         ap = tpf_one.pipeline_mask
-
-        
 
 
     elif inputs[:3] == 'TIC':
@@ -256,7 +263,7 @@ for inputs in identifiers:
                 
                 sr = lightkurve.search_tesscut(coord, sector=sector)
                 tpf = sr.download(cutout_size=tpf0.shape)
-                print(tpf.pipeline_mask) # Comment out this Line to deactive PipelineMask printing 
+                print(tpf.pipeline_mask)
                 tpf_one = tpf[0]
                 tpf_one.to_fits(star_type + str(numberID) + '_fits.fits',overwrite=True)
                 ap = tpf0.pipeline_mask
@@ -337,7 +344,6 @@ for inputs in identifiers:
         tr = tpf_one.wcs.pixel_to_world(tr_x, tr_y)
         bl = tpf_one.wcs.pixel_to_world(bl_x, bl_y)
         br = tpf_one.wcs.pixel_to_world(br_x, br_y)
-
         
         tpf_data.close()
 
@@ -403,8 +409,30 @@ for inputs in identifiers:
                 plot_ruwe_order.append(ruwe[index]) 
                 plot_flux_order.append(flux[index]) 
 
+        # Number of comps 
+        comp_num_l.append(len(plot_source_order) - 1)
+    
+        # Amplitude Dilution
+        temp_amp_dil = []
+        for i in range(len(plot_flux_order)):
+            if i == 0:
+                amp_dil = 0.0
+            else:
+                amp_dil = (plot_flux_order[i]) / np.sum(plot_flux_order) 
+            temp_amp_dil.append(amp_dil) 
+        amp_dil_l.append(temp_amp_dil)       
+
+        total_amp_dil.append(np.sum(plot_flux_order[1:])/np.sum(plot_flux_order))
+
+        # Magnitude Difference
+        temp_mag_diff = []
+        for i in range(len(plot_phot_order)):
+            mag_diff = plot_phot_order[i] - plot_phot_order[0]
+            temp_mag_diff.append(mag_diff)
+        mag_diff_l.append(temp_mag_diff)
+
         # Saving final data lists for the output file
-        star_list.append(star_type+" "+numberID)
+        star_list.append(numberID)
         ra_list.append(plot_ra_order) 
         dec_list.append(plot_dec_order) 
         gaia_source_list.append(plot_source_order) 
@@ -443,25 +471,65 @@ for inputs in identifiers:
             plt.plot(right_line_x, right_line_y, linewidth=3, color='white')
 
             # Plotting magnitudes 
-            for i in range(len(phot)):
-                try:
-                    # Applying magnitude cut-off remove difference >=5
-                    if np.abs(plot_phot_order[i] - plot_phot_order[0] )<=5:
+       #     for i in range(len(phot)):
+       #         try:
+       #             # Applying magnitude cut-off remove difference >=5
+       #             if np.abs(plot_phot_order[i] - plot_phot_order[0] )<=5:
 
+#                        plt.text(companions_to_plot[0][i], companions_to_plot[1][i], str(round(plot_phot_order[i], 3)), color='#dd1c77', fontsize=25)
+#                        plt.scatter(companions_to_plot[0][i], companions_to_plot[1][i], marker='*', s=2000, color='white', edgecolor='black')
+#                    else:
+#                        del plot_phot_order[i] 
+#                        del companions_to_plot[0][i]
+#                        del companions_to_plot[1][i]
+#
+#                except:
+#                    continue
+
+            # Plotting magnitudes 
+
+
+            if MAG_TESS and star_type == 'TIC':
+                for i in range(len(phot)):
+                    try:
+                        # Applying magnitude cut-off remove difference >= MAG_CUT (default 5)
+                        if np.abs(plot_phot_order[i] - plot_phot_order[0] )<= MAG_CUT:
+
+                            plt.text(companions_to_plot[0][i], companions_to_plot[1][i], str(round(plot_phot_order[i], 3)), color='#dd1c77', fontsize=25)
+                        else:
+                            del plot_phot_order[i] 
+                            del companions_to_plot[0][i]
+                            del companions_to_plot[1][i]
+                    except:
+                        continue
+
+            if MAG_KEPLER and star_type == 'KIC':
+                for i in range(len(phot)):
+                    try:
+                        # Applying magnitude cut-off remove difference >= MAG_CUT (default 5)
+                        if np.abs(plot_phot_order[i] - plot_phot_order[0] )<= MAG_CUT:
+
+                            plt.text(companions_to_plot[0][i], companions_to_plot[1][i], str(round(plot_phot_order[i], 3)), color='#dd1c77', fontsize=25)
+                        else:
+                            del plot_phot_order[i] 
+                            del companions_to_plot[0][i]
+                            del companions_to_plot[1][i]
+
+                    except:
+                        continue
+            
+            if (not MAG_TESS and star_type=='TIC') or (not MAG_KEPLER and star_type=='KIC'):
+                for i in range(len(phot)):
+                    try:
                         plt.text(companions_to_plot[0][i], companions_to_plot[1][i], str(round(plot_phot_order[i], 3)), color='#dd1c77', fontsize=25)
-                        plt.scatter(companions_to_plot[0][i], companions_to_plot[1][i], marker='*', s=2000, color='white', edgecolor='black')
-                    else:
-                        del plot_phot_order[i] 
-                        del companions_to_plot[0][i]
-                        del companions_to_plot[1][i]
+                        
+                    except:
+                        continue
 
-                except:
-                    continue
-
-           # Plotting target star and companions
-            
+            # Plotting target star and companions
+            # plt.scatter(companions_to_plot[0][1:], companions_to_plot[1][1:], marker='*', s=2000, color='white', edgecolor='black')
             plt.scatter(companions_to_plot[0][0], companions_to_plot[1][0], marker='*', s=2000, color='pink', edgecolor='black')
-            
+
             # Plotting corner text 
             plt.text(tr_x+0.2, tr_y+0.2, 'RA = ' + str(round(tr.ra.deg, 4)) + '\nDec = ' + str(round(tr.dec.deg, 4)), fontsize=15, backgroundcolor='white') 
             plt.text(tl_x-1.8, tl_y+0.2, 'RA = ' + str(round(tl.ra.deg, 4)) + '\nDec = ' + str(round(tl.dec.deg, 4)), fontsize=15, backgroundcolor='white') 
@@ -493,14 +561,8 @@ for inputs in identifiers:
             plt.savefig(plot_path +star_type +'_'+ str(numberID) + '.png')
             a = a + 1
             plt.close()
-
-# Timing code 
-t1 = time.time()
-total = t1 - t0
-print('The total time to create these plots is ' + str(total/60) + ' minutes.') 
-
-# Saving data file
-data = zip(star_list, ra_list, dec_list, gaia_source_list, g_mag_list, ruwe_list, flux_list) 
-header = ['star_id', 'ra', 'dec', 'gaia_source_list', 'g_mag_list', 'ruwe', 'flux']
-df = pd.DataFrame(data=data, columns=header) 
-df.to_csv(code_file_path + 'fluxct_data.csv', index=False) 
+    
+rows = zip(star_list, ra_list, dec_list, gaia_source_list, ruwe_list, flux_list, amp_dil_l, total_amp_dil, mag_diff_l, comp_num_l) 
+header = ['id', 'ra', 'dec', 'gaia_id', 'ruwe', 'flux', 'amp_dil', 'total_amp_dil', 'mag_diff', 'comp_num']
+df = pd.DataFrame(data=rows, columns=header) 
+df.to_csv(final_file_path + 'final_stats.csv', index=False)  
